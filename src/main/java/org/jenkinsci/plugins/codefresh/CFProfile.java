@@ -16,15 +16,21 @@ import java.util.List;
 public class CFProfile {
     private final String cfUser;
     private final Secret cfToken;
-    private List<CFService> services;
+    private final String cfUrl;
+    private List<CFPipeline> services;
+    private List<CFComposition> compositions;
     private CFApi api;
+    private boolean selfSignedCert;
     //private List<CFService> services;
 
-    public CFProfile(String cfUser, Secret cfToken) throws IOException {
+    public CFProfile(String cfUser, Secret cfToken, String cfUrl, boolean selfSignedCert) throws IOException {
         this.cfUser = cfUser;
         this.cfToken = cfToken;
-        this.api = new CFApi(this.cfToken);
-        this.services = api.getServices();
+        this.cfUrl = cfUrl;
+        this.selfSignedCert = selfSignedCert;
+        this.api = new CFApi();
+        this.services = api.getPipelines();
+        this.compositions = api.getCompositions();
     }
 
     public String getUser(){
@@ -36,16 +42,20 @@ public class CFProfile {
     }
 
     public int testConnection() throws IOException{
-        api = new CFApi(cfToken);
-        if ( api.getConnection("") == null )
-        {
-            return 1;
-        }
-        return 0;
+       api = new CFApi(cfToken, cfUrl, selfSignedCert );
+       
+       try{
+           api.getConnection("");
+       }
+       catch (Exception e)
+       {
+            throw e;
+       }
+       return 0;
     }
 
     String getServiceIdByName(String serviceName) {
-        for (CFService service: services){
+        for (CFPipeline service: services){
             if (service.getName().equals(serviceName))
             {
                 return service.getId();
@@ -55,18 +65,43 @@ public class CFProfile {
     }
 
     String getServiceIdByPath(String gitPath) {
-        String repoOwner = gitPath.split("/")[1];
-        String serviceName = gitPath.split("/")[2].split("\\.")[0];
-        if (repoOwner.equals(cfUser))
-        {
-            for (CFService service: services){
-                if (service.getName().equals(serviceName))
-                {
+        String serviceName = gitPath.split("/")[2].split("\\.")[0];      
+        for (CFPipeline service: services){
+            if (service.getName().equals(serviceName))
+            {
                     return service.getId();
-                }
+            }
+        }
+        return null;
+    }
+    
+    String getServiceRepoOwner(String serviceId) {
+        for (CFPipeline service: services){
+            if (service.getId().equals(serviceId))
+            {
+                return service.getRepoOwner();
             }
         }
         return null;
     }
 
+    String getServiceRepoName(String serviceId) {
+        for (CFPipeline service: services){
+            if (service.getId().equals(serviceId))
+            {
+                return service.getRepoName();
+            }
+        }
+        return null;
+    }
+
+    String getCompositionIdByName(String compositionName) {
+        for (CFComposition composition: compositions){
+            if (composition.getName().equals(compositionName))
+            {
+                return composition.getId();
+            }
+        }
+        return null;
+    }
 }

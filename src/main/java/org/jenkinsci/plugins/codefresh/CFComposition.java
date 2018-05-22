@@ -11,14 +11,12 @@ import hudson.util.Secret;
  *
  * @author antweiss
  */
-public class CFService {
+public class CFComposition {
     private final String name;
     private final String id;
-    private final Secret cfToken;
 
-    public CFService(Secret cfToken, String gitRepo, String id) {
-        this.name = gitRepo;
-        this.cfToken = cfToken;
+    public CFComposition(String name, String id ) {
+        this.name = name;
         this.id = id;
     }
 
@@ -29,5 +27,5 @@ public class CFService {
     public String getId() {
         return id;
     }
-
+    
 }
